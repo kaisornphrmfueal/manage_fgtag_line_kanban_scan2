@@ -1,0 +1,1 @@
+Model,Tag No,LineID,Shift,Model Name,Model No,Produce Date ,Qty ,Serial No Start,Serial No End,Printed by,Printed date,FgTag,image,status print,stdQty,datereprint

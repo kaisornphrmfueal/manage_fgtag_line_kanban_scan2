@@ -1,0 +1,76 @@
+﻿<IntegrationFile Name="fgTag" Version="9" ID="8ded64b9-74f3-4996-bf5b-4d1863e406d2">
+  <ActionGroup ID="f46135a5-3e14-4911-a4b3-950b3ffb2904" RunMethod="Sequential" MessagingEnabled="false">
+    <Actions>
+      <FileTriggerIntegration Name="fgTagb" ID="3f7b4a4c-513f-4b75-9c4c-ff812b563930" IgnoreErrors="true" Filter="*.txt" DetectionAction="Delete" DetectionExtension="dat" LockedFileTimeout="30000">
+        <ActionGroup ID="9c55ba38-c08c-4cf0-9176-289d94358ed5" RunMethod="Sequential" MessagingEnabled="false">
+          <Actions>
+            <BarTenderCommandLineAction Name="BarTender Command Line" ID="16870898-db6d-4f4d-b3b7-3403e8ca2c87" IgnoreErrors="false">
+              <CommandLine>
+                <Value>/AF="D:\xampp\htdocs\ticket_project\manage_fgtag_line\views\uploads\btw\fgTag.btw" /P /Close</Value>
+              </CommandLine>
+              <DatabaseFile />
+            </BarTenderCommandLineAction>
+          </Actions>
+        </ActionGroup>
+        <ScanFolder Path="\\192.168.1.38\test_tag\print\7\cmdb" />
+      </FileTriggerIntegration>
+      <FileTriggerIntegration Name="fgTago" ID="eed80a13-199e-4a26-a425-57e0e67c3262" IgnoreErrors="true" Filter="*.txt" DetectionAction="Delete" DetectionExtension="dat" LockedFileTimeout="30000">
+        <ActionGroup ID="e1efcce7-5ddf-437d-a4b0-93f6903f624b" RunMethod="Sequential" MessagingEnabled="false">
+          <Actions>
+            <BarTenderCommandLineAction Name="BarTender Command Line" ID="08fa6685-524f-41a6-8497-f9ee1a9ba20a" IgnoreErrors="false">
+              <CommandLine>
+                <Value>/AF="D:\xampp\htdocs\ticket_project\manage_fgtag_line\views\uploads\btw\fgTag.btw" /P /Close</Value>
+              </CommandLine>
+              <DatabaseFile />
+            </BarTenderCommandLineAction>
+          </Actions>
+        </ActionGroup>
+        <ScanFolder Path="\\192.168.1.38\test_tag\print\7\cmdo" />
+        <MoveToFolder Path="C:\" />
+        <FailureMoveToFolder Path="C:\" />
+      </FileTriggerIntegration>
+      <FileTriggerIntegration Name="fgTags" ID="f6889f8e-282a-47be-91dd-3d569e770ee5" IgnoreErrors="true" Filter="*.txt" DetectionAction="Delete" DetectionExtension="dat" LockedFileTimeout="30000">
+        <ActionGroup ID="152859f0-3909-46df-b865-cfa55b8f59fa" RunMethod="Sequential" MessagingEnabled="false">
+          <Actions>
+            <BarTenderCommandLineAction Name="BarTender Command Line" ID="683b89ca-3178-49dc-ad5a-6a6cd08a61c1" IgnoreErrors="false">
+              <CommandLine>
+                <Value>/AF="D:\xampp\htdocs\ticket_project\manage_fgtag_line\views\uploads\btw\supplierTag.btw" /P /Close</Value>
+              </CommandLine>
+              <DatabaseFile>
+                <FileSystem.Librarian AllowUnpublishedFiles="true" />
+              </DatabaseFile>
+            </BarTenderCommandLineAction>
+          </Actions>
+        </ActionGroup>
+        <ScanFolder Path="\\192.168.1.38\test_tag\print\7\cmds" />
+        <MoveToFolder Path="C:\" />
+        <FailureMoveToFolder Path="C:\" />
+      </FileTriggerIntegration>
+    </Actions>
+  </ActionGroup>
+  <Metadata>
+    <Properties>
+      <Properties Name="BuilderName" Type="Seagull.Framework.Serialization.SerializableString">
+        <Value>TaskListToIntegrationFileConverter</Value>
+      </Properties>
+      <Properties Name="BuilderVersion" Type="System.Double">
+        <Value>1</Value>
+      </Properties>
+      <Properties Name="MostRecentlyUsedVariables" Type="System.String">
+        <Value>EventData</Value>
+      </Properties>
+      <Properties Name="SelectedDeploymentConfiguration" Type="System.String">
+        <Value>Custom</Value>
+      </Properties>
+      <Properties Name="SelectedIntegration" Type="System.Int32">
+        <Value>0</Value>
+      </Properties>
+      <Properties Name="SelectedOptionsPage" Type="System.String">
+        <Value>0;0</Value>
+      </Properties>
+    </Properties>
+  </Metadata>
+  <SourcePath>D:\xampp\htdocs\ticket_project\manage_fgtag_line\fgTag.btin</SourcePath>
+  <IsPrinting>false</IsPrinting>
+  <IsPrintPreview>false</IsPrintPreview>
+</IntegrationFile>

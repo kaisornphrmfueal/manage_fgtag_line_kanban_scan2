@@ -1,0 +1,246 @@
+<?php
+	//echo "===".$_POST['scan2'];
+	if(!empty($_POST['scan2']) &&  $_POST['scan2']=="Submit"){
+		
+		
+				//Should be checking old tag or waiting tag!!!
+				//Create Tag 
+				$post_scan=$_POST['model'];
+				$mxtag=selectMxTag($user_login);
+				
+			//	$pline=$_POST['hslid'];
+				$linesp=sprintf("%02d",$user_login);
+				$mxtagsp=sprintf("%07d",$mxtag);
+				$tagnon=$linesp.$mxtagsp;
+				if( date("H:i:s") >= "07:50:00" AND date("H:i:s") <= "20:19:59"){
+							$chshift="Day";
+							$datework=date('Y-m-d');
+						}else{
+							$chshift="Night";
+							if( date("H:i:s") > "20:19:59" AND date("H:i:s") <= "23:59:59"){
+								$datework=date('Y-m-d');
+							}else{
+								$datework=date( "Y-m-d",  strtotime("-1 day") );
+							}
+						}
+				$tagb=date("Ymd").$tagnon;
+				
+		if(strlen($post_scan)=="9"){
+				$sql_tk="SELECT b.ticket_ref,b.ticket_qty ,a.std_qty,b.status_write ,b.model_no,a.id_model
+						FROM  ".DB_DATABASE1.".fgt_model a
+                        LEFT JOIN ".DB_DATABASE2.".rf_kanban_ticket b ON a.tag_model_no = b.model_no
+																			 
+						WHERE b.ticket_ref = '".$post_scan."' 
+						AND b.status_write = '0'
+						GROUP BY b.ticket_ref "; //Remove from line31    AND  a.std_qty <> b.ticket_qty
+				$qrctk=mysqli_query($con, $sql_tk);
+				if(mysqli_num_rows($qrctk)<>0){
+					$rsctk=mysqli_fetch_array($qrctk);	
+						$ticket_no=	$rsctk['ticket_ref'];
+						$tk_qty=$rsctk['ticket_qty'];
+						$rspmodel=$rsctk['model_no'];
+						$rsp_idmodel=$rsctk['id_model'];
+					
+						 $sqltg="INSERT INTO ".DB_DATABASE1.".fgt_srv_tag 
+									SET line_id='$linesp', 
+									tag_no= '$tagnon', 
+									id_model='$rsp_idmodel', 
+									model_kanban='$rspmodel',
+									shift='$chshift', 
+									fg_tag_barcode='$tagb',
+									status_print='Not yet' ,
+									matching_ticket_no='$ticket_no', ticket_qty='$tk_qty',kanban_status='A',
+									date_insert ='".date('Y-m-d H:i:s')."',
+									date_work ='".$datework."' ,
+									work_id = (SELECT work_id FROM ".DB_DATABASE1.".fgt_leader  
+											WHERE line_id = '".$linesp."' ORDER BY work_id DESC  LIMIT 1)"; 
+							$qrtg=mysqli_query($con, $sqltg);
+							log_hist($user_login,"New Tag",$mxtag,"fgt_srv_tag",$sqltg);
+										
+										$sqlutk="UPDATE  ".DB_DATABASE2.".rf_kanban_ticket SET
+												 status_write=5, last_status='Reserved'
+												 WHERE ticket_ref='$ticket_no'";
+										$qrtk=mysqli_query($con, $sqlutk); //Reserved
+					
+							gotopage("index.php?id=".base64_encode('printtag')."&idtg=".base64_encode($tagnon));
+					}else{
+						alert("ไม่มีข้อมูลในระบบ กรุณาติดต่อหัวหน้างาน");
+						gotopage("index.php?id=".base64_encode('print'));
+					} // END check tiket if(mysql_num_rows($qrctk)<>0){
+		}else{
+					
+				$pmodel=substr($post_scan,0, 15);  
+				$ptkstatus=substr($post_scan,15, 1);   
+		 	 	$sqlckm="SELECT tag_no FROM ".DB_DATABASE1.".fgt_srv_tag
+						 WHERE model_kanban = '$pmodel'
+						 AND status_print in ('Wait','Not yet')
+						 AND line_id ='$user_login'";
+				$qrckm=mysqli_query($con, $sqlckm);
+				if(mysqli_num_rows($qrckm)<>0){
+					$rsckm=mysqli_fetch_array($qrckm);
+					gotopage("index.php?id=".base64_encode('printtag')."&idwait=".base64_encode($rsckm['tag_no']));
+				}else{
+				$sql_tk="SELECT b.ticket_ref,b.ticket_qty ,a.std_qty,b.status_write,b.model_no
+						FROM  ".DB_DATABASE1.".fgt_model a
+                        LEFT JOIN ".DB_DATABASE2.".rf_kanban_ticket b ON a.tag_model_no = b.model_no
+																			AND  a.std_qty = b.ticket_qty 
+						WHERE b.model_no ='$pmodel'
+						AND b.status_write in ('0','10')
+						ORDER BY b.status_write DESC,b.ticket_ref  ASC LIMIT 1";
+							// AND b.status_write = '0'ORDER BY b.ticket_ref  ASC LIMIT 1
+				$qrctk=mysqli_query($con, $sql_tk);
+				if(mysqli_num_rows($qrctk)<>0){
+					$rsctk=mysqli_fetch_array($qrctk);	
+						$ticket_no=	$rsctk['ticket_ref'];
+						$tk_qty=$rsctk['ticket_qty'];
+						 $sqltg="INSERT INTO ".DB_DATABASE1.".fgt_srv_tag 
+									SET line_id='$linesp', 
+									tag_no= '$tagnon', 
+									id_model=(SELECT id_model FROM ".DB_DATABASE1.".fgt_model  WHERE tag_model_no = '".$pmodel."'), 
+									model_kanban='$pmodel',
+									shift='$chshift', 
+									fg_tag_barcode='$tagb',
+									status_print='Not yet' ,
+									matching_ticket_no='$ticket_no', ticket_qty='$tk_qty',kanban_status='$ptkstatus',
+									date_insert ='".date('Y-m-d H:i:s')."',
+									date_work ='".$datework."' ,
+									bsi_model='$post_scan',
+									work_id = (SELECT work_id FROM ".DB_DATABASE1.".fgt_leader  
+											WHERE line_id = '".$linesp."' ORDER BY work_id DESC  LIMIT 1)"; 
+							$qrtg=mysqli_query($con, $sqltg);
+							log_hist($user_login,"New Tag",$mxtag,"fgt_srv_tag",$sqltg);
+										
+										$sqlutk="UPDATE  ".DB_DATABASE2.".rf_kanban_ticket SET
+												 status_write=5, last_status='Reserved'
+												 WHERE ticket_ref='$ticket_no'";
+										$qrtk=mysqli_query($con, $sqlutk); //Reserved
+					
+							gotopage("index.php?id=".base64_encode('printtag')."&idtg=".base64_encode($tagnon));
+					}else{
+						alert("ไม่มีข้อมูลในระบบ กรุณาติดต่อหัวหน้างาน");
+						gotopage("index.php?id=".base64_encode('print'));
+					}
+					// END check tiket if(mysql_num_rows($qrctk)<>0){
+				}//if(mysql_num_rows($qrckm)<>0){
+		
+					
+		}//END if(strlen($post_scan)=="9"){  // ELSE IF SCAN TICKET
+		
+		
+		
+		
+		
+		
+					
+	}//if(!empty($_POST['button2'])){
+
+	if(!empty($_GET['wtag'])){
+			$gtagw=$_GET['wtag'];
+			$sqlwt="UPDATE ".DB_DATABASE1.".fgt_srv_tag SET status_print='Wait'
+					 WHERE tag_no='".$gtagw."' ";
+			$qrwt=mysqli_query($con, $sqlwt);
+			//$plineid = $_GET['lid'];
+			log_hist($user_login,"Waiting",$gtagw,"fgt_srv_tag","");
+			gotopage("index.php?id=".base64_encode('print'));
+			
+		}//if(!empty($_GET['wtag'])){
+		
+?>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<script type="text/javascript">
+window.onload = function() {
+  document.getElementById("model").focus();
+}
+</script>
+
+		<?php
+	
+	    $sql_emp="SELECT a.tag_no,b.tag_model_no,a.line_id,a.fg_tag_barcode,
+					a.tag_qty,b.model_name,b.std_qty ,COUNT(c.tag_no) AS ctag
+					FROM ".DB_DATABASE1.".fgt_srv_tag a 
+					LEFT JOIN ".DB_DATABASE1.".fgt_model b ON a.id_model=b.id_model 
+					LEFT JOIN ".DB_DATABASE1.".fgt_srv_serial c ON a.tag_no=c.tag_no
+					WHERE a.line_id ='$user_login' 
+					AND a.status_print  in ('Wait','Not yet')
+					GROUP BY  a.tag_no";
+		$qrem=mysqli_query($con, $sql_emp);
+		$nums=mysqli_num_rows($qrem);
+		
+		
+		 ?>
+		 
+		
+ <div class="col-2">
+   <table width="380 px" border="1" class="table01" >
+     <tr height="31">
+       <th colspan="4" > Wating for Print (รายการวิทยุที่รอพิมพ์ FG Tag)</th>
+     </tr>
+     <tr height="31">
+       <th width="81" ><span class="text_black_bold">Model Name<br />
+         (ชื่อโมเดล)
+       </span></th>
+       <th width="91" ><span class="text_black_bold">Tag No.<br />
+         (หมายเลขแท็ก)
+       </span></th>
+       <th width="128"><span class="text_black_bold">STD Qty.<br />
+       (จำนวนมาตรฐาน)</span></th>
+       <th width="100"><span class="text_black_bold">Current Qty<br />
+         จำนวนที่แสกนไปแล้ว
+       </span></th>
+     </tr>
+     <?php
+     	if($nums<>0){
+			while($rsem=mysqli_fetch_array($qrem)){
+				$tagnowait=$rsem['tag_no'];
+	 ?>
+     <tr   <?php //echo icolor($v); $v = $v + 1; ?> onMouseOver="className=&quot;over&quot;"  onMouseOut="className=&quot;&quot;" height="31px" align="center">
+       <td><span class="text_black_normal02"><?php echo $rsem['model_name'];?> </span></td>
+       <td><span class="text_black_normal02"><a href="index.php?id=<?=base64_encode('printtag')?>&idwait=<?=base64_encode($tagnowait)?>"><?php echo $tagnowait;?></a> </span></td>
+       <td><span class="text_black_normal02"><?php echo $rsem['std_qty'];?> </span></td>
+       <td><span class="text_black_normal02"><?php echo $rsem['ctag'];?> </span></td>
+     </tr>
+
+     <?php
+			}//while($rs(mysql_fetch_array())){
+		}else{
+			    echo  "<tr align='center'>";
+      			echo  " <td colspan='4'><center><div class='table_comment_small' >No have data...</div></center></td>";
+    			echo " </tr>";
+			}
+	 ?>
+   </table>
+   
+</div>
+  
+  <div class="rightPane" align="center">
+<form name="scan"  id="scan" method="post" action=""   onsubmit="return false;"  autocomplete="off" > <!--  onsubmit='return validate(this)'  -->
+            <table width="749" border="1" align="center" class="table01">
+              <tr>
+                <th height="31" colspan="2"><span class="text_black"><?php echo $top_name;?> Real Time Printing</span></th>
+              </tr>
+                <tr>
+                <td width="335" height="32"><div class="tmagin_left"> <span class="text_black">Kanban - Model No. Or Ticket No.: <br />
+					(แสกนหมายเลขโมเดลจากกันบัง หรือ Ticket No. งานเศษ)</span>
+				</div></td>
+                <td width="398">
+                <div class="tmagin_right">
+                  <input type="text" name="model" id="model"  class="bigtxtbox" style="width:240px; size:18px;"  onkeypress="return ckKeyPresse(event);" />
+                  <input type="button" name="btnscan" id="btnscan" value="Submit" class="buttonb" onclick="validate(this.value)" />
+                  <input type="hidden" name="scan2" id="scan2"  value="Submit" />        
+                </div> </td>
+                </tr>
+              <tr>
+                <td colspan="2" height="38"  align="center">
+             <div id="txtStatus"> </div>
+    
+                </td>
+              </tr>
+            </table>
+</form>
+
+
+</div> 
+
+  
+  
+  

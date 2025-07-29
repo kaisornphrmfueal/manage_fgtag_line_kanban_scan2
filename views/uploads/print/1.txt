@@ -1,0 +1,2 @@
+Model,Tag No,Shift,Model Name,Model No,Produce Date ,Qty ,Serial No 1-n,Printed by,Printed date,Serial 1,Serial 2,Serial 3,Serial 4,Serial 5,Serial 6,Serial 7,Serial 8,Serial 9,Serial 10,Serial 11,Serial 12,Serial 13,Serial 14,Serial 15,Serial 16,FgTag,Part No,Part Name,image,status print,fg print,stdQty,datereprint
+04345,070147279,Day,T-363JP,123000-71630101,15-Jul-2022 16:22,2,BU700477-BU700478,FA-6,15-Jul-2022 16:22,BU700477,BU700478,,,,,,,,,,,,,,,20220715070147279,-,-,1017-220616112331.jpg,Printed,,2,
