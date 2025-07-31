@@ -1,7 +1,6 @@
 <?php
 require_once 'head.php';
 
-
   if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $transferslip = trim($_POST['transferslip'] ?? '');
 
