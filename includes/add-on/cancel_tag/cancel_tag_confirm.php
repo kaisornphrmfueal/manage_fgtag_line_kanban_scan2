@@ -4,11 +4,18 @@ require_once 'head.php';
 if(!empty($_POST['fgtagno'])) {
     $get_fgtag = check_fgtag_no($_POST['fgtagno'], $_POST['transferslip']);
     if($get_fgtag === true) {
-      $message = "ยืนยันการยกเลิก Transfer Slip สำเร็จ";
+      $update_result = update_ticket_status($_POST['fgtagno'], $_POST['transferslip']);
+      if($update_result === true) {
+        gotopage('cancel_tag_confirm_serial.php?transferslip=' . base64_encode($_POST['transferslip']) . '&fgtagno=' . base64_encode($_POST['fgtagno']));
+      } else {
+        $message = $update_result;
+        echo $message;
+      }
     }else{
       $message = $get_fgtag;
     }
     $_GET['transferslip'] = base64_encode($_POST['transferslip'] ?? '');
+    
     echo "<script>
       document.addEventListener('DOMContentLoaded', function() {
       var resultDiv = document.getElementById('checktagresult');
