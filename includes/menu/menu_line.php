@@ -22,7 +22,7 @@
                        <li><a href="windows.php?win=confirm&page=adjust_model_scan">Adjust Tag Data</a></li>
                        <li><a href="windows.php?win=confirm&page=adjust_report">Report for Adjust</a></li>
                        <li><a href="windows.php?win=confirm&page=report_max_tag">Report Max Serial</a></li>
-					   <li><a href="index.php?id=<?=base64_encode('../../includes/add-on/cancel_tag/cancel_tag')?>">Cancel FGTAG</a></li>
+					   <li><a href="../../add-on/cancel_tag/cancel_tag.php">Cancel FGTAG</a></li>
                        
 			   </ul>
 		 	</li>

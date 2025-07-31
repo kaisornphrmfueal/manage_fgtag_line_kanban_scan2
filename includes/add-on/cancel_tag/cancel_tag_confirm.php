@@ -1,52 +1,74 @@
 <?php
-require_once 'function.php';
+require_once 'head.php';
 
-
-  if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $transferslip = trim($_POST['transferslip'] ?? '');
-
-    if ($transferslip === '') {
-      $message = 'กรุณากรอก Transfer Slip';
-    } else {
-      $chck_transferslip = check_transferslip($transferslip);
-      if ($chck_transferslip === false) {
-        $message = 'ไม่พบข้อมูล Trasfer Slip นี้';
-      } else {
-        $message = 'ยกเลิกใบโอนสินค้าเรียบร้อยแล้ว: ' . htmlspecialchars($chck_transferslip['ticket_ref']);
-      }
+if(!empty($_POST['fgtagno'])) {
+    $get_fgtag = check_fgtag_no($_POST['fgtagno'], $_POST['transferslip']);
+    if($get_fgtag === true) {
+      $message = "ยืนยันการยกเลิก Transfer Slip สำเร็จ";
+    }else{
+      $message = $get_fgtag;
     }
-
+    $_GET['transferslip'] = base64_encode($_POST['transferslip'] ?? '');
     echo "<script>
       document.addEventListener('DOMContentLoaded', function() {
-      var resultDiv = document.getElementById('cancelTagResult');
-      resultDiv.innerHTML = '<div class=\"alert alert-warning\" role=\"alert\">' + " . json_encode($message) . " + '</div>';
+      var resultDiv = document.getElementById('checktagresult');
+      resultDiv.innerHTML = '<div class=\"alert alert-warning\" role=\"alert\">".$message."</div>';
       });
     </script>";
-  }
-?>
-  
-  
-  <link href="../../includes/add-on/cancel_tag/bootstrap-5.3.3/css/bootstrap.min.css" rel="stylesheet">
-  <script src="../../includes/add-on/cancel_tag/bootstrap-5.3.3/js/bootstrap.bundle.min.js"></script>
+    }
 
+    
+
+$transfer = base64_decode($_GET['transferslip'] ?? '');
+$get_ticket_info = get_ticket_info($transfer);
+
+?>
   <!-- Main Content: FGTAG Cancel Form -->
   <div class="container mt-5" id="cancelTagSection">
-    <div class="card">
-      <div class="card-header">
-        <h4>Cancel FGTAG</h4>
-      </div>
-      <div class="card-body">
-        <form id="cancelTagForm" method="POST" action="">
-          <div class="mb-3">
-            <label for="transferslip" class="form-label"><b>Scan transfer slip no.</b></label>
-            <input type="text" class="form-control" id="transferslip" name="transferslip" required autofocus>
+    <div class="row justify-content-center">
+      <div class="col-lg-7 col-md-9">
+        <div class="card shadow-sm border-0">
+          <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="bi bi-receipt-cutoff me-2"></i>ยืนยันการยกเลิก Transfer Slip</h5>
           </div>
-          <div class="text-center">
-            <button type="submit" class="btn btn-success">Submit</button>
+          <div class="card-body">
+              <div class="mb-3">
+                <label for="transferslip" class="form-label fw-semibold">Transfer Slip no.</label>
+                <input type="text" class="form-control bg-light" id="transferslip" name="transferslip" value="<?= htmlspecialchars($transfer); ?>" readonly>
+              </div>
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label for="ticket_qty" class="form-label fw-semibold">Model No.</label>
+                  <input type="text" class="form-control bg-light" id="ticket_qty" name="ticket_qty" value="<?= htmlspecialchars($get_ticket_info['model_no'] ?? '') ?>" readonly>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label for="model_no" class="form-label fw-semibold">Model Name</label>
+                  <input type="text" class="form-control bg-light" id="model_no" name="model_no" value="<?= htmlspecialchars($get_ticket_info['model_name'] ?? '') ?>" readonly>
+                </div>
+              </div>
+              <hr>
+              <form method="post" action="">
+              <div class="row mb-3">
+                <div class="col-8">
+                  <label for="fgtagno" class="form-label fw-semibold text-center">สแกน FGTAG Original no.</label>
+                    <input type="text" class="form-control bg-light" id="fgtagno" name="fgtagno" autocomplete="off" required autofocus>
+                    <input type="hidden" name="transferslip" value="<?= htmlspecialchars($transfer); ?>">
+                </div>
+                <div class="col-4 d-flex align-items-end">
+                  <button type="submit" class="btn btn-success w-100">ยืนยัน</button>
+                </div>
+              </div>
+              </form>
+              <div id="checktagresult" class="mt-3"></div>
+              <br>
+              <hr>
+              <div class="alert alert-info mt-3" role="alert">
+                <strong>หมายเหตุ:</strong> กรุณาสแกน FGTAG Original no. ที่ต้องการยกเลิก Transfer Slip นี้ หากไม่พบ FGTAG หรือ FGTAG นี้ถูกยกเลิกไปแล้ว ระบบจะแจ้งเตือนให้ทราบ
           </div>
-        </form>
-        <div id="cancelTagResult" class="mt-3"></div>
+        </div>
       </div>
     </div>
   </div>
+
+    <?php require_once 'footer.php'; ?>
 
