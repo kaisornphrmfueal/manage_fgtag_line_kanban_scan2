@@ -1,28 +1,37 @@
 <?php
 require_once 'head.php';
 
-if(!empty($_POST['fgtagno'])) {
-    $get_fgtag = check_fgtag_no($_POST['fgtagno'], $_POST['transferslip']);
-    if($get_fgtag === true) {
+if (!empty($_POST['fgtagno'])) {
+  $get_fgtag = check_fgtag_no($_POST['fgtagno'], $_POST['transferslip']);
+
+  if ($get_fgtag === true) {
+    $check_fgtag_conversion = check_converstion_status($_POST['fgtagno']);
+
+    if ($check_fgtag_conversion !== false) {
+      gotopage('cancel_tag_confirm_serial.php?transferslip=' . base64_encode($_POST['transferslip']) . '&fgtagno=' . base64_encode($_POST['fgtagno']));
+    } else {
       $update_result = update_ticket_status($_POST['fgtagno'], $_POST['transferslip']);
-      if($update_result === true) {
+
+      if ($update_result === true) {
         gotopage('cancel_tag_confirm_serial.php?transferslip=' . base64_encode($_POST['transferslip']) . '&fgtagno=' . base64_encode($_POST['fgtagno']));
       } else {
         $message = $update_result;
         echo $message;
       }
-    }else{
-      $message = $get_fgtag;
     }
-    $_GET['transferslip'] = base64_encode($_POST['transferslip'] ?? '');
-    
-    echo "<script>
-      document.addEventListener('DOMContentLoaded', function() {
+  } else {
+    $message = $get_fgtag;
+  }
+
+  $_GET['transferslip'] = base64_encode($_POST['transferslip'] ?? '');
+
+  echo "<script>
+    document.addEventListener('DOMContentLoaded', function() {
       var resultDiv = document.getElementById('checktagresult');
       resultDiv.innerHTML = '<div class=\"alert alert-warning\" role=\"alert\">".$message."</div>';
-      });
-    </script>";
-    }
+    });
+  </script>";
+}
 
     
 

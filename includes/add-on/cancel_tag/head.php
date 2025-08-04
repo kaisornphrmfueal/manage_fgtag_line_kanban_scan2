@@ -12,7 +12,7 @@ require_once 'function.php';
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <title>FG Transfer Tag RealTime Printing</title>
-
+ 
     <!-- CSS -->
     <link href="<?= HTTP_SERVER . DIR_PAGE . DIR_INCLUDES . DIR_CSS ?>style.css" rel="stylesheet" type="text/css" />
     <link href="<?= HTTP_SERVER . DIR_PAGE . DIR_INCLUDES . DIR_CSS ?>txt.css" rel="stylesheet" type="text/css" />
@@ -22,9 +22,9 @@ require_once 'function.php';
     <link href="<?= HTTP_SERVER . DIR_PAGE . DIR_INCLUDES . DIR_CSS ?>dropdown/default/default.ultimate.css" media="screen" rel="stylesheet" type="text/css" />
 
     <!-- JS -->
-    <script type="text/javascript" src="<?= HTTP_SERVER . DIR_PAGE . DIR_INCLUDES . DIR_JAVA ?>all.js"></script>
-    <script type="text/javascript" src="<?= HTTP_SERVER . DIR_PAGE . DIR_INCLUDES . DIR_JAVA ?>java.js"></script>
-    <script type="text/javascript" src="<?= HTTP_SERVER . DIR_PAGE . DIR_INCLUDES . DIR_JAVA ?>date-picker2.js"></script>
+    <script type="text/javascript" src="<?= HTTP_SERVER . DIR_PAGE . DIR_JAVA ?>all.js"></script>
+    <script type="text/javascript" src="<?= HTTP_SERVER . DIR_PAGE . DIR_JAVA ?>java.js"></script>
+    <script type="text/javascript" src="<?= HTTP_SERVER . DIR_PAGE . DIR_JAVA ?>date-picker2.js"></script>
 
     <!-- Bootstrap -->
     <link href="bootstrap-5.3.3/css/bootstrap.min.css" rel="stylesheet">
@@ -36,11 +36,11 @@ require_once 'function.php';
         <div id="header">
             <div class="row-1">
                 <div class="fleft">
-                    <a href="#"><img src="../../<?= DIR_IMAGES ?>logoline.png" alt="" /></a>
+                    <a href="#"><img src="<?= HTTP_SERVER . DIR_PAGE . DIR_IMAGES ?>logoline.png" alt="" /></a>
                 </div>
                 <!-- MENU -->
                 <div class="menu">
-                    <?php require_once('../../menu/menu_line.php'); ?>
+                    <?php require_once('menu_line.php'); ?>
                 </div>
                 <!-- MENU -->
                 <div class="wellcome">

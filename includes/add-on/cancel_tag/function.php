@@ -57,7 +57,7 @@ function get_ticket_info($transferslip) {
 function get_fgtag_info($ticket_no) {
     global $con;
     $ticket_no = trim($ticket_no);
-    $query = "SELECT fst.tag_no , fst.matching_ticket_no , fst.ticket_qty , fm.tag_model_no , fm.model_name , fss.serial_scan_label 
+    $query = "SELECT fst.tag_no , fst.matching_ticket_no , fst.ticket_qty , fm.tag_model_no , fm.model_name , fss.serial_scan_label, fst.fg_tag_barcode 
               FROM ".DB_DATABASE1.".fgt_srv_tag fst 
               LEFT JOIN ".DB_DATABASE1.".fgt_model fm ON fst.model_kanban = fm.tag_model_no 
               LEFT JOIN ".DB_DATABASE1.".fgt_srv_serial fss ON fst.tag_no = fss.tag_no
@@ -128,7 +128,7 @@ function check_fgtag_no($fgtag_no, $transferslip) {
                         return "Model No. ของ FGTAG ไม่ตรงกับ Model No. ใน Transfer Slip";
                     }
                 } else {
-                    return "จำนวน FGTAG ที่สแกนไม่ตรงกับจำนวนที่ระบุใน Transfer Slip";
+                    return "จำนวน FGTAG ที่สแกนไม่ตรงกับจำนวนที่ระบุใน Transfer Slip หรือ Transfer Slip ถูกใช้ไปแล้ว";
                 }
                 break;
             case '3':
@@ -265,4 +265,204 @@ function update_ticket_status($fgtag_no, $transferslip) {
 
     return true;
 }
-?>
+
+function check_converstion_status($fgtag_no) {
+    global $con;
+    $fgtag_no = trim($fgtag_no);
+    $query = "SELECT c.item_status,c.id_conversion,c.process_status
+          FROM ".DB_DATABASE1.".fgt_split_line_conversion c 
+          WHERE c.fg_tag_barcode_original ='$fgtag_no' 
+		  AND c.item_status in (0,1) 
+		  ORDER BY c.id_conversion DESC";
+    $result = $con->query($query);
+    if ($result && $result->num_rows > 0) {
+        $row = $result->fetch_assoc();
+        return $row['item_status'];
+    }else{
+        return false;
+    }
+}
+
+function check_serial_scan($label_scan, $kanban_model, $fgtag_no, $ticket_no, $fgtag_barcode, $last_serial) {
+    global $con;
+    $pscanmodel = trim($label_scan);
+    $pkbmodel = trim($kanban_model);
+    $ptagno = trim($fgtag_no);
+    $phtkno = trim($ticket_no);
+    $phtagbc = trim($fgtag_barcode);
+    $poserial = trim($last_serial);
+
+    // Check if the label scan matches the expected pattern
+    $sqlct="SELECT a.tag_no,c.tag_model_no,c.label_model_no,a.line_id,a.fg_tag_barcode ,
+				b.serial_scan_label, COUNT(b.tag_no)+1 AS sr_count,a.ticket_qty AS std_qty,c.model_destination
+						FROM ".DB_DATABASE1.".fgt_srv_tag a
+						LEFT JOIN ".DB_DATABASE1.".fgt_srv_serial b ON a.tag_no=b.tag_no
+						LEFT JOIN ".DB_DATABASE1.".fgt_model c ON a.id_model=c.id_model
+						WHERE a.status_print = 'Not yet'
+						AND b.tag_no='$ptagno'
+						GROUP BY a.tag_no";
+	$qrct=mysqli_query($con, $sqlct);
+	$numct=mysqli_num_rows($qrct);
+    $chkdata=substr($pscanmodel,0, 2);
+
+    if($chkdata  == "EW" || $chkdata  == "GB" || $chkdata   == "GC"  || $chkdata   == "GD" ){
+		$psserial=substr($pscanmodel,3, 8);
+		$modelscan=$chkdata;
+	}else{
+		$exp= explode(' ' , $pscanmodel);
+			foreach( $exp as $expps ):
+				if(substr($expps,0, 1)=="B"){
+					$frdata =  $expps;
+				}
+			endforeach ;
+		$psserial=substr($frdata,0,8);
+		$modelscan=substr($pscanmodel,0, 15);			
+	}
+    $txtserial=substr($psserial,0,3);
+
+    // Check Pattern Serial
+    $sql_pat="SELECT pattern_serial FROM ".DB_DATABASE1.".fgt_pattern_serial WHERE pattern_serial = '$txtserial' ";
+	$qr_pat=mysqli_query($con, $sql_pat);
+	$num_pat=mysqli_num_rows($qr_pat);
+
+    //Check Pattern Serial exe BPB,BPC
+    if($num_pat <> 0 AND $num_pat <> "") {
+		$str_hdnlast_serial=substr($poserial, -5);
+		$str_postnew_serial=substr($psserial, -5);
+
+        if($str_postnew_serial-$str_hdnlast_serial == 1) {
+            if($numct == 0) {
+                $sqlckn="SELECT a.ticket_qty  AS std_qty,c.model_destination, d.id_conversion
+								FROM ".DB_DATABASE1.".fgt_srv_tag a
+								LEFT JOIN ".DB_DATABASE1.".fgt_model c ON a.id_model=c.id_model
+                                LEFT JOIN ".DB_DATABASE1.".fgt_split_line_conversion d on a.tag_no = d.tag_no_new
+								WHERE a.status_print = 'Not yet'
+								AND a.tag_no='$ptagno' 
+								GROUP BY a.tag_no";
+				$qrckn=mysqli_query($con, $sqlckn);
+				$rsckn=mysqli_fetch_array($qrckn);
+				$model_dest1 = $rsckn['model_destination'];
+
+                if($rsckn['std_qty'] == 1) {
+                    $sqlup_tag="UPDATE ".DB_DATABASE1.".fgt_srv_tag SET  sn_start='$psserial' , sn_end='$psserial' ,
+										status_print='Printed', tag_qty='1', date_print='".date('Y-m-d H:i:s')."',
+										tag_location='1'
+										WHERE tag_no='$ptagno' " ;
+					$qrup_tag=mysqli_query($con, $sqlup_tag);
+							
+					$sqlsr="INSERT INTO ".DB_DATABASE1.".fgt_srv_serial SET  tag_no='$ptagno', 
+									model_scan_label='$modelscan', serial_scan_label='$psserial', 
+									date_scan='".date('Y-m-d H:i:s')."'";
+					$qrsr=mysqli_query($con, $sqlsr);
+					log_hist($user_login,"Insert",$psserial,"fgt_srv_serial",$sqlsr);
+					$sqlutk="UPDATE  ".DB_DATABASE2.".rf_kanban_ticket SET
+												 status_write=6, last_status='Print Tag'
+												 WHERE ticket_ref='$phtkno'";
+					$qrtk=mysqli_query($con, $sqlutk);
+
+                    // Check if model destination is 'E' for special processing
+                    if($model_dest1 == 'E') { 
+                        $ip = $_SERVER['REMOTE_ADDR']; 
+						$tkno9=sprintf("%09d",$phtkno);
+						    $sqlmc = "INSERT INTO ".DB_DATABASE4.".record_mathing_kanban SET 
+							record_code='".date("YmdHis")."', ticket_no='$tkno9',	model_no_scan='$modelscan', 
+							fg_tag_no='$phtagbc', model_no_auto='$modelscan', judge='OK', 
+							operator_id='$top_name', record_time='".date('Y-m-d H:i:s')."', 
+							error_code='-', line_leader_id='-',ip='$ip',kanban_group='".date("ymdH")."' ,working_location='1',status_scan = '7'"; 
+							mysqli_query($con, $sqlmc); 
+							
+							
+							$sqlmc = "INSERT INTO ".DB_DATABASE4.".record_mathing_kanban_log SET 
+							record_code='".date("YmdHis")."', ticket_no='$tkno9', model_no_scan='$modelscan', fg_tag_no='$phtagbc', 
+							model_no_auto='$modelscan', judge='ok', operator_id='$top_name', record_time='$today',
+							error_code='-', line_leader_id='-',ip='$ip'";
+							mysqli_query($con, $sqlmc);
+							
+							log_record_packing($top_name,'Line insert to record_mathing_kanban',$sqlmc);
+                    }
+
+                    // Print Tag
+                    printTag($ptagno);
+					log_hist($user_login,"Printed Tag",$ptagno,"fgt_srv_tag","");
+                    sleep(3);
+                    return "success";
+
+                }else{ // If more than one serial
+                    $sqlup_tag="UPDATE ".DB_DATABASE1.".fgt_srv_tag SET sn_start='$psserial' 
+								WHERE tag_no='$ptagno' " ;
+					$qrup_tag=mysqli_query($con, $sqlup_tag);
+						
+					$sqlsr="INSERT INTO ".DB_DATABASE1.".fgt_srv_serial SET  tag_no='$ptagno', 
+								model_scan_label='$modelscan', serial_scan_label='$psserial', 
+								date_scan='".date('Y-m-d H:i:s')."'";
+					$qrsr=mysqli_query($con, $sqlsr);
+					log_hist($user_login,"Insert",$psserial,"fgt_srv_serial",$sqlsr);	
+					return "continue";
+                }
+            }else{ // If there are existing serials
+                $rsct = mysqli_fetch_array($qrct);
+                $rsstqty = $rsct['std_qty'];
+				$rsscqty = $rsct['sr_count'];
+				$model_dest = $rsct['model_destination'];
+
+                if($rsstqty == $rsscqty) {
+                    $sqlup_tag="UPDATE ".DB_DATABASE1.".fgt_srv_tag SET sn_end='$psserial' ,
+										status_print='Printed', tag_qty='$rsscqty', date_print='".date('Y-m-d H:i:s')."',
+										tag_location='1'
+										WHERE tag_no='$ptagno' " ;
+					$qrup_tag=mysqli_query($con, $sqlup_tag);
+							
+					$sqlsr="INSERT INTO ".DB_DATABASE1.".fgt_srv_serial SET  tag_no='$ptagno', 
+									model_scan_label='$modelscan', serial_scan_label='$psserial', 
+									date_scan='".date('Y-m-d H:i:s')."'";
+					$qrsr=mysqli_query($con, $sqlsr);
+					log_hist($user_login,"Insert",$psserial,"fgt_srv_serial",$sqlsr);
+					$sqlutk="UPDATE  rfid_project.rf_kanban_ticket SET
+												 status_write=6, last_status='Print Tag'
+												 WHERE ticket_ref='$phtkno'";
+					$qrtk=mysqli_query($con, $sqlutk); //Print Tag
+
+                    if($model_dest == 'E') {
+                        $ip = $_SERVER['REMOTE_ADDR'];
+						$tkno9=sprintf("%09d",$phtkno);
+						    $sqlmc = "INSERT INTO ".DB_DATABASE4.".record_mathing_kanban SET 
+							record_code='".date("YmdHis")."', ticket_no='$tkno9',	model_no_scan='$modelscan', 
+							fg_tag_no='$phtagbc', model_no_auto='$modelscan', judge='OK', 
+							operator_id='$top_name', record_time='".date('Y-m-d H:i:s')."', 
+							error_code='-', line_leader_id='-',ip='$ip',kanban_group='".date("ymdH")."' ,working_location='1',status_scan = '7'"; 
+							mysqli_query($con, $sqlmc); 
+							
+							
+							$sqlmc = "INSERT INTO ".DB_DATABASE4.".record_mathing_kanban_log SET 
+							record_code='".date("YmdHis")."', ticket_no='$tkno9', model_no_scan='$modelscan', fg_tag_no='$phtagbc', 
+							model_no_auto='$modelscan', judge='ok', operator_id='$top_name', record_time='$today',
+							error_code='-', line_leader_id='-',ip='$ip'";
+							mysqli_query($con, $sqlmc);
+							
+							log_record_packing($top_name,'Line insert to record_mathing_kanban',$sqlmc);
+                    }
+
+                    // Print Tag
+                    printTag($ptagno);
+                    log_hist($user_login,"Printed Tag",$ptagno,"fgt_srv_tag","");
+                    sleep(3);
+                    return "success";
+
+                }else{// Scan again
+                    $sqlsr="INSERT INTO ".DB_DATABASE1.".fgt_srv_serial SET  tag_no='$ptagno', 
+								model_scan_label='$modelscan', serial_scan_label='$psserial', 
+								date_scan='".date('Y-m-d H:i:s')."'";
+					$qrsr=mysqli_query($con, $sqlsr);
+					log_hist($user_login,"Insert",$psserial,"fgt_srv_serial",$sqlsr);
+                    return "continue";
+                }
+            }
+        }else{
+            return "Serial Scan ไม่ถูกต้อง กรุณาตรวจสอบ Serial Scan ใหม่อีกครั้ง";
+        }
+	}else{
+        return "รูปแบบ Pattern Serial No. ไม่ถูกต้อง กรุณาตรวจสอบ Serial Scan ใหม่อีกครั้ง";
+    }
+
+}
+

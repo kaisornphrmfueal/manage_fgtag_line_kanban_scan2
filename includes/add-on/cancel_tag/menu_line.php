@@ -2,27 +2,27 @@
 		<ul id="nav" class="dropdown dropdown-horizontal">
     
            <!--  <li><a href="index.php?id=<?=base64_encode('line')?>">Select Line</a></li>--!-->
-            <li><a href="index.php?id=<?=base64_encode('print')?>">Print Tag</a></li>
-             <li><a href="index.php?id=<?=base64_encode('reprint')?>">Reprint Tag</a></li>
-             
+            <li><a href="../../../views/lines/index.php?id=<?=base64_encode('print')?>">Print Tag</a></li>
+             <li><a href="../../../views/lines/index.php?id=<?=base64_encode('reprint')?>">Reprint Tag</a></li>
+              
              <li><span class="dir">Tag Report</span>
 				<ul>
-					   <li><a href="index.php?id=<?=base64_encode('line_report')?>">Tag Report</a></li>
-                       <li><a href="index.php?id=<?=base64_encode('tag_sum')?>">Tag Summary</a></li>
+					   <li><a href="../../../views/lines/index.php?id=<?=base64_encode('line_report')?>">Tag Report</a></li>
+                       <li><a href="../../../views/lines/index.php?id=<?=base64_encode('tag_sum')?>">Tag Summary</a></li>
 			   </ul>
 		 	</li>
-			 <li><a href="index.php?id=<?=base64_encode('model_list')?>">Model List Report</a></li>
-             <li><a href="index.php?id=<?=base64_encode('operator')?>">Operator</a></li>
+			 <li><a href="../../../views/lines/index.php?id=<?=base64_encode('model_list')?>">Model List Report</a></li>
+             <li><a href="../../../views/lines/index.php?id=<?=base64_encode('operator')?>">Operator</a></li>
              <li><span class="dir">Adjust Data</span>
 				<ul>
 					   <!--<li><a href="index.php?id=<?=base64_encode('adjust_model_scan')?>">Adjust Tag Data</a></li>
                        <li><a href="index.php?id=<?=base64_encode('report_max_tag')?>">Report Max Serial</a></li>
                        <li><a href="index.php?id=<?=base64_encode('adjust_report')?>">Report for Adjust</a></li>-->
                        
-                       <li><a href="windows.php?win=confirm&page=adjust_model_scan">Adjust Tag Data</a></li>
-                       <li><a href="windows.php?win=confirm&page=adjust_report">Report for Adjust</a></li>
-                       <li><a href="windows.php?win=confirm&page=report_max_tag">Report Max Serial</a></li>
-					   <li><a href="../../includes/add-on/cancel_tag/cancel_tag.php">Cancel FGTAG</a></li>
+                       <li><a href="../../../views/lines/windows.php?win=confirm&page=adjust_model_scan">Adjust Tag Data</a></li>
+                       <li><a href="../../../views/lines/windows.php?win=confirm&page=adjust_report">Report for Adjust</a></li>
+                       <li><a href="../../../views/lines/windows.php?win=confirm&page=report_max_tag">Report Max Serial</a></li>
+					   <li><a href="cancel_tag.php">Cancel FGTAG</a></li>
                        
 			   </ul>
 		 	</li>
