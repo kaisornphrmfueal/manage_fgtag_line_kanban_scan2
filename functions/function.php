@@ -130,12 +130,14 @@ function selectMxupload(){
 
 function whileprt($st,$ed,$qty){
 		while($st <= $ed) {
+			$x = "";
 			$x=$x.",".$st;
 			$st++;
 		} 
 		$cqty =(16-$qty)+1;
 		$runing = 1;
 		while($runing <= $cqty) {
+			$y = "";
 			$y=$y.",";
 			$runing++;
 		} 

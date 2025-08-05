@@ -3,8 +3,42 @@ require_once 'head.php';
 
 $transfer = base64_decode($_GET['transferslip'] ?? '');
 $fgtag_no = base64_decode($_GET['fgtagno'] ?? '');
+
+if(!empty($_POST['model'])) {
+    $model = htmlspecialchars($_POST['model']);
+    $sub_model = substr($model, 0, 15);
+    $hkbmodel = htmlspecialchars($_POST['hkbmodel']);
+    $htagno = htmlspecialchars($_POST['htagno']);
+    $htkno = htmlspecialchars($_POST['htkno']);
+    $htagbc = htmlspecialchars($_POST['htagbc']);
+    $hserial = htmlspecialchars($_POST['hserial']);
+    $user_login = $_SESSION['user_login'];
+
+    if($hkbmodel != $sub_model) {
+        $message = "Model mismatch. Please check the model barcode.";
+        $checktagresult = "<div class='alert alert-danger text-center' role='alert'>{$message}</div>";
+    }
+    $check_serial = check_serial_scan($model, $hkbmodel, $htagno, $htkno, $htagbc, $hserial);
+    
+    switch ($check_serial) {
+        case 'success':
+            $message = "Serial scan successful.";
+            $checktagresult = "<div class='alert alert-success text-center' role='alert'>{$message}</div>";
+            break;
+        case 'continue':
+            $message = "Serial scan successful, please continue to the next step.";
+            $checktagresult = "<div class='alert alert-info text-center' role='alert'>{$message}</div>";
+            break;
+        default:
+            $message = $check_serial;
+            $checktagresult = "<div class='alert alert-danger text-center' role='alert'>{$message}</div>";
+            break;
+
+  }
+}
+
 $get_fgtag_info = get_fgtag_info($transfer);
-$fgtag = substr($fgtag_no, 0, 8);
+$fgtag = substr($fgtag_no, 8);
 
 if($get_fgtag_info['serial_scan_label'] == null || $get_fgtag_info['serial_scan_label'] == ''){
     $last_serial = "00000000";
@@ -12,10 +46,11 @@ if($get_fgtag_info['serial_scan_label'] == null || $get_fgtag_info['serial_scan_
     $last_serial = $get_fgtag_info['serial_scan_label'];
 }
 
-$get_serial_info = get_serial_info($fgtag);
+$get_serial_info = get_serial_info($get_fgtag_info['tag_no']);
  
 ?>
   <!-- Main Content: FGTAG Cancel Form -->
+  <?php if (isset($checktagresult)) { echo $checktagresult; } ?>
   <div class="container mt-3" id="cancelTagSection">
     <div class="row justify-content-center">
       <div class="col-12 d-flex justify-content-center">
@@ -44,7 +79,7 @@ $get_serial_info = get_serial_info($fgtag);
                   <label for="model" class="form-label fw-semibold text-center" style="font-size: 1rem;">สแกน Label barcode no.</label>
                     <input type="text" class="form-control bg-light" id="model" name="model" autocomplete="off" required autofocus>
                     <input type="hidden" name="hkbmodel" value="<?= $get_fgtag_info['tag_model_no']; ?>">
-                    <input type="hidden" name="htagno" value="<?= htmlspecialchars($fgtag); ?>">
+                    <input type="hidden" name="htagno" value="<?= htmlspecialchars($get_fgtag_info['tag_no']); ?>">
                     <input type="hidden" name="htkno" value="<?= htmlspecialchars($transfer); ?>">
                     <input type="hidden" name="htagbc" value="<?= $get_fgtag_info['fg_tag_barcode']; ?>">
                     <input type="hidden" name="hserial" value="<?= $last_serial; ?>">
@@ -72,22 +107,23 @@ $get_serial_info = get_serial_info($fgtag);
                 <tbody>
                   <?php
                   $no = 1;
-                    while($get_serial_info && $get_serial_info->fetch_assoc()) {
-                      $serial_no = $get_serial_info['serial_no'];
-                      $serial_label_confirm = $get_serial_info['serial_label_confirm'];
-                      $scan_by = $_SESSION['user_login'];
-                      $date_scan = $get_serial_info['date_scan'];
-                      $no++;
+                  if($get_serial_info && is_object($get_serial_info) && $get_serial_info->num_rows > 0) {
+                    while($row = $get_serial_info->fetch_assoc()) {
+                      $serial_no = $row['serial_scan_label'];
+                      $serial_label_confirm = $row['model_scan_label']." ".$row['serial_scan_label'];
+                      $scan_by = $top_name = selectLineName($user_login);
+                      $date_scan = $row['date_scan'];
 
-                    echo "<tr>
-                      <td>{$no}</td>
-                      <td>" . htmlspecialchars($serial_no) . "</td>
-                      <td>" . htmlspecialchars($serial_label_confirm) . "</td>
-                      <td>" . htmlspecialchars($scan_by) . "</td>
-                      <td>" . htmlspecialchars($date_scan) . "</td>
-                    </tr>";
+                      echo "<tr>
+                        <td>{$no}</td>
+                        <td>" . htmlspecialchars($serial_no) . "</td>
+                        <td>" . htmlspecialchars($serial_label_confirm) . "</td>
+                        <td>" . htmlspecialchars($scan_by) . "</td>
+                        <td>" . htmlspecialchars($date_scan) . "</td>
+                      </tr>";
+                      $no++;
                     }
-                  if($no == 1) {
+                  }else {
                     echo "<tr><td colspan='5' class='text-center'>ยังไม่พบข้อมูลการสแกน Serial</td></tr>";
                   }
                   ?>
