@@ -21,7 +21,7 @@ function check_transferslip($transferslip) {
     $query = "SELECT b.ticket_ref,b.ticket_qty ,b.status_write ,b.model_no
               FROM   ".DB_DATABASE2.".rf_kanban_ticket  b
               WHERE b.ticket_ref = '$transferslip' 
-              AND b.status_write = '0'
+              AND b.status_write IN ('0','5')
               AND b.ticket_special_status ='1'
               GROUP BY b.ticket_ref";
     $result = $con->query($query);
@@ -323,7 +323,7 @@ function printTagSpecial($tagn){
 							fclose($fp);
 										  				
 							/* START BACKUP DATA TO FILE*/
-							$strFileName = "tag_backup/".date('Ymd').".txt";
+							$strFileName = "../../../views/lines/tag_backup/".date('Ymd').".txt";
 							$objFopen = fopen($strFileName, 'a');
 							fwrite($objFopen,$rstg['model_code'].",".$rstg['tag_no'].",".$rstg['line_id'].",".$rstg['shift'].",".$rstg['model_name'].",".$rstg['tag_model_no'].",".$rstg['date_print'].",".$rstg['tag_qty'].",".$rstg['sn_start'].",".$rstg['sn_end'].",".$rstg['line_name'].",".$rstg['fg_tag_barcode'].",".$rstg['customer_part_no'].",".$rstg['customer_part_name'].",".$rstg['model_picture'].",".$rstg['status_print'].",,".$rstg['std_qty'].",".$rstg['date_reprint'].",".$mtkno9.",".$tk_bcode.",".$rstg['leadern'].",".$rstg['floatern'].",".$rstg['printern']."\r\n");
 							fclose($objFopen);

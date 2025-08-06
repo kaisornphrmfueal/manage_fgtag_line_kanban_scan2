@@ -17,24 +17,27 @@ if(!empty($_POST['model'])) {
     if($hkbmodel != $sub_model) {
         $message = "Model mismatch. Please check the model barcode.";
         $checktagresult = "<div class='alert alert-danger text-center' role='alert'>{$message}</div>";
-    }
-    $check_serial = check_serial_scan($model, $hkbmodel, $htagno, $htkno, $htagbc, $hserial);
+    }else{
+      $check_serial = check_serial_scan($model, $hkbmodel, $htagno, $htkno, $htagbc, $hserial);
     
-    switch ($check_serial) {
-        case 'success':
+      switch ($check_serial) {
+          case 'success':
             $message = "Serial scan successful.";
             $checktagresult = "<div class='alert alert-success text-center' role='alert'>{$message}</div>";
+            gotopage('../../../views/lines/index.php?id='. base64_encode("print"));
             break;
-        case 'continue':
-            $message = "Serial scan successful, please continue to the next step.";
-            $checktagresult = "<div class='alert alert-info text-center' role='alert'>{$message}</div>";
-            break;
-        default:
-            $message = $check_serial;
-            $checktagresult = "<div class='alert alert-danger text-center' role='alert'>{$message}</div>";
-            break;
+          case 'continue':
+              $message = "Serial scan successful, please continue to the next step.";
+              $checktagresult = "<div class='alert alert-info text-center' role='alert'>{$message}</div>";
+              break;
+          default:
+              $message = $check_serial;
+              $checktagresult = "<div class='alert alert-danger text-center' role='alert'>{$message}</div>";
+              break;
 
-  }
+        }
+    }
+    
 }
 
 $get_fgtag_info = get_fgtag_info($transfer);

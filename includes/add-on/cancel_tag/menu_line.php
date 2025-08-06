@@ -23,6 +23,7 @@
                        <li><a href="../../../views/lines/windows.php?win=confirm&page=adjust_report">Report for Adjust</a></li>
                        <li><a href="../../../views/lines/windows.php?win=confirm&page=report_max_tag">Report Max Serial</a></li>
 					   <li><a href="cancel_tag.php">Cancel FGTAG</a></li>
+					   <li><a href="cancel_tag_special.php">Cancel FGTAG Special</a></li>
                        
 			   </ul>
 		 	</li>

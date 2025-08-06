@@ -15,7 +15,7 @@ require_once 'head.php';
         exit;
       }
     }
-
+ 
     echo "<script>
       document.addEventListener('DOMContentLoaded', function() {
       var resultDiv = document.getElementById('cancelTagResult');
