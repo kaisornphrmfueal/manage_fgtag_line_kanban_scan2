@@ -14,7 +14,10 @@ if(!empty($_POST['model'])) {
     $hserial = htmlspecialchars($_POST['hserial']);
     $user_login = $_SESSION['user_login'];
 
-    if($hkbmodel != $sub_model) {
+    $model_ticket_cut = substr_replace($hkbmodel, "", 10, 2);
+    $model_scan_cut = substr_replace($sub_model, "", 10, 2);
+
+    if($model_ticket_cut != $model_scan_cut) {
         $message = "Model mismatch. Please check the model barcode.";
         $checktagresult = "<div class='alert alert-danger text-center' role='alert'>{$message}</div>";
     }else{

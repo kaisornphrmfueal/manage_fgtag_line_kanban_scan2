@@ -15,6 +15,12 @@ function checkshift() {
     return ['shift' => $chshift, 'datework' => $datework];
 }
 
+// ฟังก์ชันสำหรับตัด "0E" ออกจาก Model No.
+function clean_model_no($model_no) {
+    // ตัด "0E" ออกจาก Model No.
+    return str_replace('0E', '', $model_no);
+}
+
 function check_transferslip($transferslip) {
     global $con;
     $transferslip = trim($transferslip);
@@ -31,7 +37,8 @@ function check_transferslip($transferslip) {
             'ticket_ref' => $row['ticket_ref'],
             'ticket_qty' => $row['ticket_qty'],
             'status_write' => $row['status_write'],
-            'model_no' => $row['model_no']
+            'model_no' => $row['model_no'],
+            'model_no_clean' => clean_model_no($row['model_no']) // เพิ่ม model_no ที่ตัด 0E แล้ว
         ];
     }else {
         return false;
@@ -48,7 +55,9 @@ function get_ticket_info($transferslip) {
               WHERE b.ticket_ref = '$transferslip'";
     $result = $con->query($query);
     if ($result && $result->num_rows > 0) {
-        return $result->fetch_assoc();
+        $row = $result->fetch_assoc();
+        $row['model_no_clean'] = clean_model_no($row['model_no']); // เพิ่ม model_no ที่ตัด 0E แล้ว
+        return $row;
     } else {
         return false;
     }
@@ -122,7 +131,68 @@ function check_fgtag_no($fgtag_no, $transferslip) {
             case '2':
                 $check_transferslip = check_transferslip($transferslip);
                 if ($check_transferslip && $check_transferslip['ticket_qty'] == $result_fg['tag_qty']) {
-                    if($result_fg['model_kanban'] == $check_transferslip['model_no']) {
+                    if($result_fg['model_kanban'] === $check_transferslip['model_no']) {
+                        return true;
+                    }else{
+                        return "Model No. ของ FGTAG ไม่ตรงกับ Model No. ใน Transfer Slip";
+                    }
+                } else {
+                    return "จำนวน FGTAG ที่สแกนไม่ตรงกับจำนวนที่ระบุใน Transfer Slip หรือ Transfer Slip ถูกใช้ไปแล้ว";
+                }
+                break;
+            case '3':
+                return "FGTAG No. นี้ถูกยกเลิกไปแล้ว";
+                break;
+            default:
+                return "สถานะ FGTAG No. ไม่ถูกต้อง";
+                break;
+        }    
+    } else {
+        return "ไม่พบ FGTAG No. นี้ในระบบ หรือ FGTAG นี้ถูกยกเลิกไปแล้ว";
+    }
+}
+
+function check_fgtag_no_special($fgtag_no, $transferslip) {
+    global $con;
+    $fgtag_no = trim($fgtag_no);
+
+    $query = "
+        SELECT 
+            a.id_pc_request,  
+            b.model_kanban,
+            a.request_status,
+            c.fg_tag_barcode,
+            b.tag_qty
+        FROM " . DB_DATABASE1 . ".fgt_split_pc_request a
+        LEFT JOIN " . DB_DATABASE1 . ".fgt_split_pc_request_detail c ON a.id_pc_request = c.id_pc_request
+        LEFT JOIN " . DB_DATABASE1 . ".fgt_srv_tag b ON c.tag_no = b.tag_no 
+        WHERE c.fg_tag_barcode = ?
+        GROUP BY a.id_pc_request
+    ";
+
+    $stmt = $con->prepare($query);
+    $stmt->bind_param('s', $fgtag_no);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($result && $result->num_rows > 0) {
+        $result_fg = $result->fetch_assoc();
+
+        switch ($result_fg['request_status']) {
+            case '0':
+                return "FGTAG No. อยู่ในสถานะรอการยืนยันจากผู้ใช้งาน";
+                break;
+            case '1':
+                return "FGTAG No. อยู่ในสถานะรอการอนุมัติจากผู้อนุมัติ";
+                break;
+            case '2':
+                $check_transferslip = check_transferslip($transferslip);
+                if ($check_transferslip && $check_transferslip['ticket_qty'] == $result_fg['tag_qty']) {
+
+                    $model_a_cut = substr_replace($result_fg['model_kanban'], "", 10, 2);
+                    $model_b_cut = substr_replace($check_transferslip['model_no'], "", 10, 2);
+
+                    if($model_a_cut === $model_b_cut) {
                         return true;
                     }else{
                         return "Model No. ของ FGTAG ไม่ตรงกับ Model No. ใน Transfer Slip";
