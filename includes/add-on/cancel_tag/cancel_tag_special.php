@@ -30,6 +30,7 @@ require_once 'head.php';
     <div class="card">
       <div class="card-header">
         <h4 class="text-danger">Cancel FGTAG Special</h4>
+        <span class="text-bg-warning">สำหรับการ Cancel งาน Change version เท่านั้น</span>
       </div>
       <div class="card-body">
         <form id="cancelTagForm" method="POST" action="">
