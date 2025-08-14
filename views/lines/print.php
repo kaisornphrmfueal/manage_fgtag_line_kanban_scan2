@@ -160,7 +160,8 @@ window.onload = function() {
 					FROM ".DB_DATABASE1.".fgt_srv_tag a 
 					LEFT JOIN ".DB_DATABASE1.".fgt_model b ON a.id_model=b.id_model 
 					LEFT JOIN ".DB_DATABASE1.".fgt_srv_serial c ON a.tag_no=c.tag_no
-					WHERE a.line_id ='$user_login' 
+					LEFT JOIN ".DB_DATABASE1.".fgt_split_line_conversion d on a.tag_no = d.tag_no_new 
+					WHERE a.line_id ='$user_login' AND d.tag_no_new is NULL
 					AND a.status_print  in ('Wait','Not yet')
 					GROUP BY  a.tag_no";
 		$qrem=mysqli_query($con, $sql_emp);
